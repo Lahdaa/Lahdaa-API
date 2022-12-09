@@ -11,6 +11,8 @@ return [
     'pending' => 'pending',
     'in_progress' => 'in_progress',
     'approved' => 'approved',
+    'declined' => 'declined',
+    'failed' => 'failed',
 
     'email_from' => 'info@steviapro.com',
     'email_from_name' => 'Steviapro',

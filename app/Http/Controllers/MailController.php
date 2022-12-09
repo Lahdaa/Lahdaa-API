@@ -137,6 +137,52 @@ class MailController extends Controller{
       }
    }
 
+
+
+
+   public static function send_payment_success_mail($user_fullName, $user_email, $user_phoneNumber, $course_id, $course_name, $tnx_ref,
+                                                   $amount_currency, $amount, $channel, $tnx_date) {
+      try{
+         $data = array(
+            'user_fullName' => $user_fullName,
+            'user_email' => $user_email,
+            'user_phoneNumber' => $user_phoneNumber,
+            'course_id' => $course_id,
+            'course_name' => $course_name,
+            'tnx_ref' => $tnx_ref,
+            'amount_currency' => $amount_currency,
+            'amount' => $amount,
+            'channel' => $channel,
+            'date_created' => $tnx_date,
+         );
+           
+         Mail::send('emails.payment_success_mail', $data, function($message) use ($data){
+            $message->to($data['user_email'])->subject('Course Purchase Successful');
+            $message->from(Config::get('constants.email_from'), Config::get('constants.email_from_name'));
+         });
+      } catch(Exception $e){
+         return $e->getMessage();
+      }
+   }
+
+   public static function send_course_enrolment_mail($user_fullName, $user_email, $course_id, $course_name) {
+      try{
+         $data = array(
+            'user_fullName' => $user_fullName,
+            'user_email' => $user_email,
+            'course_id' => $course_id,
+            'course_name' => $course_name,
+         );
+
+         Mail::send('emails.course_enrolment_mail', $data, function($message) use ($data){
+            $message->to($data['user_email'])->subject('Course Enrolment');
+            $message->from(Config::get('constants.email_from'), Config::get('constants.email_from_name'));
+         });
+      } catch(Exception $e){
+         return $e->getMessage();
+      }
+   }
+
    public function basic_email() {
       $data = array('name'=>"Virat Gandhi");
      

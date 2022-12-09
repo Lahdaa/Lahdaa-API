@@ -29,6 +29,14 @@ if (!function_exists('format_date')){
     }
 }
 
+if (!function_exists('get_property_value')){
+    function get_property_value($key){
+        $propertyData = DB::select('select property_value from app_properties WHERE property_key = :key', ['key' => $key]);
+
+        return $propertyData[0]->property_value; 
+    }
+}
+
 if (!function_exists('check_authentication')){
     function check_authentication($header_auth_token){
         if(isset($header_auth_token)){

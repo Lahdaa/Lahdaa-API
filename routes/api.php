@@ -9,6 +9,9 @@ use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\HelperController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaypalController;
+use App\Http\Controllers\StripeController;
+use App\Http\Controllers\PaystackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +63,7 @@ Route::post('delete-live-class', [CourseController::class, 'deleteLiveClass']);
 Route::get('get-next-live-class', [CourseController::class, 'getNextLiveClass']);
 Route::post('get-live-class-by-id', [CourseController::class, 'getLiveClassByLiveClassId']);
 Route::post('get-live-classes-by-course-id', [CourseController::class, 'getLiveClassesByCourseId']);
+Route::post('upload-live-class-recording', [CourseController::class, 'uploadLiveClassRecording']);
 Route::get('get-instructor-past-live-classes', [CourseController::class, 'getInstructorPastLiveClasses']);
 Route::get('get-instructor-future-live-classes', [CourseController::class, 'getInstructorFutureLiveClasses']);
 Route::post('update-course-price', [CourseController::class, 'updatePriceForCourse']);
@@ -147,6 +151,21 @@ Route::post('payout/get-settlement-request-by-id', [PaymentController::class, 'g
 
 //Payment Routes
 Route::post('pay-and-enroll-for-course', [PaymentController::class, 'payAndEnrollForCourse']);
+
+//PayPal Routes
+Route::post('paypal/make-payment', [PaypalController::class, 'payWithPaypal']);
+Route::post('paypal/get-payment-status', [PaypalController::class, 'getPaymentStatus']);
+
+Route::get('paypal/success', [PaypalController::class, 'success']);
+Route::get('paypal/error', [PaypalController::class, 'error']);
+
+//Stripe Routes
+Route::post('stripe/make-payment', [StripeController::class, 'payWithStripe']);
+
+//Paystack Routes
+Route::post('paystack/get-payment-link', [PaystackController::class, 'getPaymentLink']);
+Route::get('paystack/verify-transaction', [PaystackController::class, 'verifyTransaction']);
+
 
 //Auth Routes
 Route::post('student-register', [PassportAuthController::class, 'registerStudent']);

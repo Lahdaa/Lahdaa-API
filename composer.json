@@ -12,7 +12,11 @@
         "laravel/framework": "^8.12",
         "laravel/passport": "^10.1",
         "laravel/tinker": "^2.5",
-        "stripe/stripe-php": "^7.110"
+        "league/omnipay": "^3.2",
+        "omnipay/paypal": "^3.0",
+        "paypal/rest-api-sdk-php": "^1.14",
+        "stripe/stripe-php": "^7.110",
+        "unicodeveloper/laravel-paystack": "^1.0"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

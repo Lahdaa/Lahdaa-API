@@ -619,12 +619,14 @@ class CourseController extends Controller
                                                 and course_id = :course_id', ['course_id' => $course_id]);
 
                 $course_live_classes_result = DB::select('select l.id, l.live_class_name, l.date, l.start_time, 
-                                            l.end_time, l.time_zone, p.name, l.link_to_live_class, l.note_to_students, 
+                                            l.end_time, l.time_zone, t.abbr as timezone_name_abbr, t.value as timezone_name, 
+                                            p.name, l.link_to_live_class, l.link_to_recording, l.note_to_students, l.is_completed, 
                                             l.live_class_type as live_class_type_id, lt.name as live_class_type_name, c.topic as curriculum_name
                                             FROM live_class l 
                                             inner join live_class_platform p on p.id = l.preferred_platform 
                                             inner join live_class_type lt on lt.live_class_type_id = l.live_class_type 
                                             inner join curriculum c on c.curriculum_id = l.curriculum_id 
+                                            inner join timezones t on t.id = l.time_zone 
                                             where l.is_deleted = 0 and l.course_id = :id', ['id' => $course_id]);
 
                 $reviews_result = DB::select('select * from reviews where is_deleted = 0 
@@ -1407,7 +1409,7 @@ class CourseController extends Controller
 
             //Get Params
             $live_class_id = check_if_null_or_empty($request->live_class_id);
-            $live_class_name = check_if_null_or_empty($request->live_class_name);
+            //$live_class_name = check_if_null_or_empty($request->live_class_name);
             $live_class_type = check_if_null_or_empty($request->live_class_type);
             $curriculum_id = check_if_null_or_empty($request->curriculum_id);
             $date = check_if_null_or_empty($request->date);
@@ -1417,9 +1419,11 @@ class CourseController extends Controller
             $preferred_platform = check_if_null_or_empty($request->preferred_platform);
             $link_to_live_class = check_if_null_or_empty($request->link_to_live_class);
             $date_updated = get_current_date_time();
+
+            self::removeUploadedRecordingIfNewer($live_class_id, $date);
     
             $data = array(
-                'live_class_name' => $live_class_name,
+                //'live_class_name' => $live_class_name,
                 'live_class_type' => $live_class_type,
                 'curriculum_id' => $curriculum_id,
                 'date' => $date,
@@ -1440,7 +1444,7 @@ class CourseController extends Controller
                             live_class_type_id = :live_class_type_id', ['live_class_type_id' => (int)$live_class_type]); 
 
             $curriculum_result = DB::select('select topic, description from curriculum where 
-                            curriculum_id = :curriculum_id', ['curriculum_id' => (int)$curriculum_id]); 
+                            curriculum_id = :curriculum_id', ['curriculum_id' => (int)$curriculum_id]);
 
             save_activity_trail($user_id, 'Live class updated', 
                                 'Live class with id ('.$live_class_id.') updated',
@@ -1449,20 +1453,42 @@ class CourseController extends Controller
             return response()->json([
                 'message' => 'Live class updated',
                 'live_class_id' => $live_class_id,
-                'live_class_name' => $live_class_name,
+                //'live_class_name' => $live_class_name,
                 'live_class_type' => $live_class_type,
-                'live_class_type_name' => $live_class_type_result[0]->name,
+                'live_class_type_name' => $live_class_type_result ? $live_class_type_result[0]->name : '',
                 'curriculum_id' => $curriculum_id,
-                'curriculum_topic' => $curriculum_result[0]->topic,
-                'curriculum_description' => $curriculum_result[0]->description,
+                'curriculum_topic' => $curriculum_result ? $curriculum_result[0]->topic : '',
+                'curriculum_description' => $curriculum_result ? $curriculum_result[0]->description : '',
                 'date' => $date,
                 'start_time' => $start_time,
                 'end_time' => $end_time,
                 'time_zone_id' => $time_zone_id,
-                'time_zone_name' => $time_zone_result[0]->abbr,
+                'time_zone_name' => $time_zone_result ? $time_zone_result[0]->abbr : '',
                 'preferred_platform' => $preferred_platform,
                 'link_to_live_class' => $link_to_live_class,
             ], 200);
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+
+    public static function removeUploadedRecordingIfNewer($live_class_id, $updated_date){
+        try {
+            //get last date in db
+            $date_result = DB::select('select date from live_class where id = :id', ['id' => (int)$live_class_id]);
+
+            // check if greater than updated date
+            $date_in_db = strtotime($date_result[0]->date);
+            $updated_date = strtotime($updated_date);
+
+            if($updated_date > $date_in_db){
+                // delete link_to_recording
+                $data = array(
+                    'link_to_recording' => null
+                );
+        
+                DB::table('live_class')->where('id', $live_class_id)->update($data);
+            }
         } catch(Exception $e){
             return $e->getMessage();
         }
@@ -1500,6 +1526,45 @@ class CourseController extends Controller
             return response()->json([
                 'message' => 'Live class deleted',
                 'live_class_id' => $live_class_id,
+            ], 200);
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+
+    public function uploadLiveClassRecording(Request $request){
+        try{
+            $header_auth_token = $request->header('AuthToken');
+
+            $auth_check_result = check_authentication($header_auth_token);
+            
+            if($auth_check_result['status'] == false){
+                return $auth_check_result;
+            } else{
+                $user = $auth_check_result['data'] ;
+            }
+                  
+            $user_id = $user->id;
+
+            $live_class_id = check_if_null_or_empty($request->live_class_id);
+            $link_to_recording = check_if_null_or_empty($request->link_to_recording);
+            $date_updated = get_current_date_time();
+
+            $data = array(
+                'link_to_recording' => $link_to_recording,
+                'updated_at' => $date_updated
+            );
+    
+            DB::table('live_class')->where('id', $live_class_id)->update($data);
+
+            save_activity_trail($user_id, 'Live class recording uploaded', 
+                                'Recording uploaded for live class with id ('.$live_class_id.')',
+                                $date_updated);
+    
+            return response()->json([
+                'message' => 'Live class recording updated successfully',
+                'live_class_id' => $live_class_id,
+                'link_to_recording' => $link_to_recording
             ], 200);
         } catch(Exception $e){
             return $e->getMessage();

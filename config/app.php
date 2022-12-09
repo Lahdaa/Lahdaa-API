@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Stevia'),
 
     /*
     |--------------------------------------------------------------------------
@@ -176,6 +176,8 @@ return [
         App\Providers\RouteServiceProvider::class,
 
         Laravel\Passport\PassportServiceProvider::class,
+        
+        Unicodeveloper\Paystack\PaystackServiceProvider::class
 
     ],
 
@@ -228,6 +230,8 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+
+        'Paystack' => Unicodeveloper\Paystack\Facades\Paystack::class,
 
     ],
 
