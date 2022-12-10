@@ -103,6 +103,7 @@ Route::get('/course/course-search-new', [CourseController::class, 'courseSearchN
 
 Route::post('mark-course-as-complete', [CourseController::class, 'markCourseAsComplete']);
 Route::post('mark-course-content-as-complete', [CourseController::class, 'markCourseContentAsComplete']);
+Route::post('get-course-content-tracking-info', [CourseController::class, 'getCourseContentTrackingInfo']);
 
 //Instructor Routes
 Route::get('instructor/get-instructor-dashboard-stats', [InstructorController::class, 'getInstructorDashboardStats']);
@@ -141,6 +142,7 @@ Route::get('helper/get-all-who_is_this_course_for_categories', [HelperController
 Route::get('helper/get-all-timezones', [HelperController::class, 'getAllTimezones']);
 Route::get('helper/get-all-live-class-types', [HelperController::class, 'getAllLiveClassTypes']);
 Route::get('helper/get-all-durations', [HelperController::class, 'getAllDuration']);
+Route::post('helper/encrypt-text', [HelperController::class, 'encryptText']);
 
 
 //Payout Routes
@@ -153,18 +155,20 @@ Route::post('payout/get-settlement-request-by-id', [PaymentController::class, 'g
 Route::post('pay-and-enroll-for-course', [PaymentController::class, 'payAndEnrollForCourse']);
 
 //PayPal Routes
-Route::post('paypal/make-payment', [PaypalController::class, 'payWithPaypal']);
+Route::post('paypal/make-payment', [PaypalController::class, 'getPaymentLink']);
 Route::post('paypal/get-payment-status', [PaypalController::class, 'getPaymentStatus']);
-
+Route::post('paypal/verify-transaction', [PaypalController::class, 'verifyTransaction']);
 Route::get('paypal/success', [PaypalController::class, 'success']);
 Route::get('paypal/error', [PaypalController::class, 'error']);
 
 //Stripe Routes
 Route::post('stripe/make-payment', [StripeController::class, 'payWithStripe']);
+Route::post('stripe/get-payment-link', [StripeController::class, 'getPaymentLink']);
+Route::post('stripe/verify-transaction', [StripeController::class, 'verifyTransaction']);
 
 //Paystack Routes
 Route::post('paystack/get-payment-link', [PaystackController::class, 'getPaymentLink']);
-Route::get('paystack/verify-transaction', [PaystackController::class, 'verifyTransaction']);
+Route::post('paystack/verify-transaction', [PaystackController::class, 'verifyTransaction']);
 
 
 //Auth Routes

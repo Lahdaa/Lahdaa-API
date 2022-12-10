@@ -2599,6 +2599,7 @@ class CourseController extends Controller
                                         ['curriculum_id' => (int)$curriculum->curriculum_id, 
                                         'user_id' => (int)$user_id]);
 
+
                     $total_estimated_time = 0;
                     
                     foreach ($course_contents_result as $course_content) {
@@ -2693,6 +2694,106 @@ class CourseController extends Controller
             }
                   
             $user_id = $user->id;
+
+            $validator = Validator::make($request->all(),[ 
+                'course_content_id' => 'required'
+            ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }
+
+            $course_content_id = check_if_null_or_empty($request->course_content_id);
+            $date_completed = get_current_date_time();
+            $is_completed = Config::get('constants.true');
+
+            $data = array(
+                'is_completed' => $is_completed,
+                'date_completed' => $date_completed
+            );
+    
+            DB::table('course_content_tracker')
+                ->where('course_content_id', $course_content_id)
+                ->where('user_id', $user_id)
+                ->update($data);
+
+
+            save_activity_trail($user_id, 'Course content completed', 'User ('.$user_id.') completed the course content with id ('.$course_content_id.')',
+                                $date_completed);
+
+            $course_content_result = DB::select('select * from course_content where is_deleted = 0 
+                                and id = :id', ['id' => (int)$course_content_id]); 
+    
+            return response()->json([
+                'message' => 'Course content marked as completed',
+                'course_content_id' => $course_content_id,
+                'resource_name' => $course_content_result[0]->resource_name,
+                'estimated_time' => $course_content_result[0]->estimated_time,        
+                'attachment_link' => $course_content_result[0]->attachment_link,
+                'resource_type' => $course_content_result[0]->resource_type,
+                'description' => $course_content_result[0]->description
+            ], 200);
+           
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+
+    public function getCourseContentTrackingInfo(Request $request){
+        try{
+            $header_auth_token = $request->header('AuthToken');
+
+            $auth_check_result = check_authentication($header_auth_token);
+            
+            if($auth_check_result['status'] == false){
+                return $auth_check_result;
+            } else{
+                $user = $auth_check_result['data'] ;
+            }
+                  
+            $user_id = $user->id;
+
+            $validator = Validator::make($request->all(),[ 
+                'course_content_id' => 'required',
+                'course_id' => 'required',
+            ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }
+
+            $course_content_id = check_if_null_or_empty($request->course_content_id);
+            $course_id = check_if_null_or_empty($request->course_id);
+
+            $tracker_result = DB::select('select * from course_content_tracker where course_content_id = :course_content_id and user_id = :user_id', 
+                                        ['course_content_id' => $course_content_id, 'user_id' => $user_id]);
+
+            if(!empty($tracker_result)){
+                return response()->json([
+                    'message' => 'Course content tracking data gotten',
+                    'course_content_id' => $course_content_id,
+                    'tracking_data' => $tracker_result
+                ], 200);
+            } else {
+
+                $data = array(
+                    'course_id' => $course_id,
+                    'user_id' => $user_id,
+                    'course_content_id' => $course_content_id,
+                    'is_completed' => Config::get('constants.false'),
+                    'created_at' => get_current_date_time()
+                );
+        
+                $tracking_id = DB::table('course_content_tracker')->insertGetId($data);
+
+                $tracker_result = DB::select('select * from course_content_tracker where id = :id', ['id' => $tracking_id]);
+
+                return response()->json([
+                    'message' => 'Course content tracking initialized',
+                    'course_content_id' => $course_content_id,
+                    'tracking_data' => $tracker_result
+                ], 200);
+            }
 
             $course_content_id = check_if_null_or_empty($request->course_content_id);
             $date_completed = get_current_date_time();

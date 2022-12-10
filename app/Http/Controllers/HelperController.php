@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -153,6 +154,46 @@ class HelperController extends Controller
             ], 200);
         } catch(Exception $e){
             return $e->getMessage();
+        }
+    }
+
+    public function encryptText(Request $request){
+        try{           
+            $validator = Validator::make($request->all(),[ 
+                'text' => 'required'
+            ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }  
+
+
+            $plaintext = check_if_null_or_empty($request->text);
+
+            $password = get_property_value('ENC_SECRET');
+
+           // $result = encrypt($text, $encryptionKey);
+
+           $method = "AES-128-CBC";
+           $key = hash('sha256', $password, true);
+           $iv = openssl_random_pseudo_bytes(16);
+       
+           $ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv);
+           $hash = hash_hmac('sha256', $ciphertext . $iv, $key, true);
+       
+           $result = $iv . $hash . $ciphertext;
+    
+            return response()->json([
+                'message' => 'Encryption successful',
+                'raw_text' => $plaintext,
+                'encryted_text' => $result
+            ], 200);
+        } catch(Exception $e){
+            echo $e->getMessage();
+
+            return response()->json([
+                'message' => 'Encryption failed'
+            ], 500);
         }
     }
 }

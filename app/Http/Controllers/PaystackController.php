@@ -28,6 +28,14 @@ class PaystackController extends Controller
             }
                           
             $user_id = $user->id;
+
+            $validator = Validator::make($request->all(),[ 
+                'course_id' => 'required'
+            ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }
         
             $course_id = check_if_null_or_empty($request->course_id);
         
@@ -94,9 +102,12 @@ class PaystackController extends Controller
                         'payment_link_data' => json_decode($result)
                     ], 200);                
                 }                
+            } else{
+                return response()->json([
+                    'message' => 'No course with id ' . $course_id,
+                    'state' => 'error'
+                ], 400);
             }
-
-    
             
         }catch(\Exception $e) {
             echo $e;
@@ -109,7 +120,16 @@ class PaystackController extends Controller
 
     public function verifyTransaction(Request $request){
         try {
-            $transaction_reference = $request->input('reference');
+            $validator = Validator::make($request->all(),[ 
+                'reference' => 'required'
+            ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }
+
+            $transaction_reference = $request->reference;
+
             $curl = curl_init();
   
             curl_setopt_array($curl, array(
@@ -144,7 +164,6 @@ class PaystackController extends Controller
                 $response_array = get_object_vars(json_decode($response));
 
                 if($response_array['data']->status == 'success'){
-                    //var_dump($response_array['data']);
 
                     // Approve payment transaction
                     $data = array(
@@ -194,7 +213,7 @@ class PaystackController extends Controller
                     MailController::send_course_enrolment_mail($user_fullName, $user_email, $course_id, $course_name);
 
                     //Save activity trail
-                    save_activity_trail($user_id, 'Course payment', 'User ('.$user_id.') payed and enroled for a course with id ('.$course_id.')',
+                    save_activity_trail($user_id, 'Course payment', 'User ('.$user_id.') payed via paystack and enroled for a course with id ('.$course_id.')',
                         get_current_date_time());
 
                     return response()->json([

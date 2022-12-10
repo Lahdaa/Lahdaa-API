@@ -105,3 +105,55 @@ if(!function_exists('save_activity_trail')){
         return $activity_trail_id;
     }
 }
+
+if(!function_exists('encrypt')){
+    function encrypt($plaintext, $password){
+        try {
+            $method = "AES-128-CBC";
+            $key = hash('sha256', $password, true);
+            $iv = openssl_random_pseudo_bytes(16);
+        
+            $ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv);
+            $hash = hash_hmac('sha256', $ciphertext . $iv, $key, true);
+        
+            return $iv . $hash . $ciphertext;
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+}
+
+if(!function_exists('decrypt')){
+    function decrypt($string, $key){
+        try {
+            $result = '';
+            $string = base64_decode($string);
+            for($i = 0; $i < strlen($string); $i++) {
+                $char = substr($string, $i, 1);
+                $keychar = substr($key, ($i % strlen($key)) - 1, 1);
+                $char = chr(ord($char) - ord($keychar));
+                $result .= $char;
+            }
+            return $result;
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+}
+
+
+function encrycpt($plaintext, $password) {
+    
+}
+
+function ndecrypt($ivHashCiphertext, $password) {
+    $method = "AES-256-CBC";
+    $iv = substr($ivHashCiphertext, 0, 16);
+    $hash = substr($ivHashCiphertext, 16, 32);
+    $ciphertext = substr($ivHashCiphertext, 48);
+    $key = hash('sha256', $password, true);
+
+    if (!hash_equals(hash_hmac('sha256', $ciphertext . $iv, $key, true), $hash)) return null;
+
+    return openssl_decrypt($ciphertext, $method, $key, OPENSSL_RAW_DATA, $iv);
+}
