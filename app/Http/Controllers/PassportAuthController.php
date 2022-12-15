@@ -160,6 +160,7 @@ class PassportAuthController extends Controller
                         'email' => Auth::user()->email,
                         'phone_number' => Auth::user()->phone_number,
                         'role_id' => $result[0]->role_id,
+                        'lang' => Auth::user()->lang,
                     ];
 
                     $date_created = get_current_date_time();

@@ -44,6 +44,7 @@ Route::post('student/get-student-billing-info', [StudentController::class, 'getS
 Route::post('student/save-course-to-wishlist', [StudentController::class, 'saveCourseToWishlist']);
 Route::post('student/upload-profile-picture', [StudentController::class, 'uploadProfilePicture']);
 Route::post('student/save-course-review', [StudentController::class, 'saveCourseReview']);
+Route::post('student/get-recent-courses', [StudentController::class, 'getRecentCourses']);
 
 //Course Routes
 Route::post('create-course', [CourseController::class, 'createCourse']);

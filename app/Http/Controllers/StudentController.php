@@ -116,7 +116,7 @@ class StudentController extends Controller
 
             $enrolled_courses_result = DB::select('select c.id, c.course_name, (select cc.name from course_category cc where cc.id = c.course_category) 
                                                 as course_category_name, c.thumbnail_file_url, c.course_rating from courses c where c.id in 
-                                                (select e.course_id from enrolment_history e where e.user_id = :id order by e.created_at desc)', 
+                                                (select e.course_id from enrolment_history e where e.user_id = :id order by e.date_started desc)', 
                                             ['id' => $user_id]); 
     
             return response()->json([
@@ -145,7 +145,7 @@ class StudentController extends Controller
             $ongoing_courses_result = DB::select('select c.id, c.course_name, (select cc.name from course_category cc where cc.id = c.course_category) 
                                                  as course_category_name, c.thumbnail_file_url, c.course_rating from courses c where c.id in 
                                                 (select e.course_id from enrolment_history e where e.user_id = :id and e.is_completed = :isCompleted 
-                                                order by e.created_at desc)', ['id' => $user_id, 'isCompleted' => Config::get('constants.false')]); 
+                                                order by e.date_started desc)', ['id' => $user_id, 'isCompleted' => Config::get('constants.false')]); 
     
             return response()->json([
                 'message' => 'All ongoing courses',
@@ -173,7 +173,7 @@ class StudentController extends Controller
             $completed_courses_result = DB::select('select c.id, c.course_name, (select cc.name from course_category cc where cc.id = c.course_category) 
                                         as course_category_name, c.thumbnail_file_url, c.course_rating from courses c where c.id in 
                                        (select e.course_id from enrolment_history e where e.user_id = :id and e.is_completed = :isCompleted 
-                                       order by e.created_at desc)', ['id' => $user_id, 'isCompleted' => Config::get('constants.true')]); 
+                                       order by e.date_started desc)', ['id' => $user_id, 'isCompleted' => Config::get('constants.true')]); 
     
             return response()->json([
                 'message' => 'All completed courses',
@@ -749,4 +749,74 @@ class StudentController extends Controller
         }
     }
 
+    public function getRecentCourses(Request $request){
+        try {
+            $header_auth_token = $request->header('AuthToken');
+
+            $auth_check_result = check_authentication($header_auth_token);
+            
+            if($auth_check_result['status'] == false){
+                return $auth_check_result;
+            } else{
+                $user = $auth_check_result['data'] ;
+            }
+                
+            $user_id = $user->id;
+
+            $enrolled_courses_result = DB::select('select distinct course_id from enrolment_history where user_id = :id order by date_started desc', 
+                                                ['id' => $user_id]);
+
+            $enrolled_courses_data_result = array();
+
+            if(!empty($enrolled_courses_result)){
+                if(count($enrolled_courses_result) > 0){
+
+                    for($i = 0; $i < sizeof($enrolled_courses_result); $i++){
+
+                        $data = (object)[];
+
+                        $course_id = $enrolled_courses_result[$i]->course_id;
+
+                        $courses_result = DB::select('select id, course_name, thumbnail_file_url from courses where id = :id', ['id' => $course_id]);
+
+                        $course_content_count_result = DB::select('select count(*) as count from course_content where is_deleted = 0 and course_id = :course_id', 
+                                                    ['course_id' => $course_id]);
+
+                        $courses_result[0]->total_course_content = $course_content_count_result[0]->count;
+
+
+                        $completed_course_contents = DB::select('select count(*) as count from course_content_tracker where course_id = :course_id and user_id = :user_id and is_completed = 1',
+                                                    ['course_id' => $course_id, 'user_id' => $user_id]);
+
+
+                        $courses_result[0]->completed_course_content = $completed_course_contents[0]->count;
+
+                        $data->course_id = $course_id;
+                        $data->course_name = $courses_result[0]->course_name;
+                        $data->thumbnail_file_url = $courses_result[0]->thumbnail_file_url;
+                        $data->total_course_content = $course_content_count_result[0]->count;
+                        $data->completed_course_content = $completed_course_contents[0]->count;
+
+                        array_push($enrolled_courses_data_result, $data);  
+                    }
+
+                    return response()->json([
+                        'message' => 'Recent courses gotten successfully',
+                        'recent_courses' => $enrolled_courses_data_result
+                    ], 200);
+                }
+
+            } else {
+                return response()->json([
+                    'message' => 'Recent courses gotten successfully',
+                    'recent_courses' => $enrolled_courses_data_result
+                ], 200);
+            }
+                                                
+        } catch(Exception $e){
+            return response()->json([
+                'message' => 'Error fetching student recent courses'
+            ], 500);
+        }
+    }
 }

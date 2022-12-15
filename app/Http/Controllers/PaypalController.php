@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\DB;
 use URL;
+use Validator;
 use Illuminate\Support\Facades\Config;
 use App\Http\Controllers\MailController;
 
@@ -57,8 +58,8 @@ class PaypalController extends Controller
                 $omni_response = $this->gateway->purchase(array(
                     'amount' => $amount_to_be_paid,
                     'currency' => 'GBP',
-                    'returnUrl' => 'https://stevia-app.netlify.app/user-course/confirm-payment?channel=paypal',
-                    'cancelUrl' => 'https://stevia-app.netlify.app/user-course/payment-cancelled'
+                    'returnUrl' => Config::get('constants.prod_url') . 'user-course/confirm-payment?channel=paypal',
+                    'cancelUrl' => Config::get('constants.prod_url') . 'course/' . $course_id
                 ))->send();
             
                 $admin_revenue = (floatval(get_property_value('ADMIN_SHARE_PERCENTAGE')) * $amount_to_be_paid) / 100;

@@ -235,8 +235,8 @@ class StripeController extends Controller
                   ]);
 
                 $checkout_session = $stripe->checkout->sessions->create([
-                    'success_url' => 'https://stevia-app.netlify.app/user-course/confirm-payment?channel=stripe&session_id={CHECKOUT_SESSION_ID}',
-                    'cancel_url' => 'https://stevia-app.netlify.app/user-course/payment-failed',
+                    'success_url' => Config::get('constants.prod_url') . 'user-course/confirm-payment?channel=stripe&session_id={CHECKOUT_SESSION_ID}',
+                    'cancel_url' => Config::get('constants.prod_url') . 'course/' . $course_id,
                     'line_items' => [
                       [
                         'price' => $price->id,

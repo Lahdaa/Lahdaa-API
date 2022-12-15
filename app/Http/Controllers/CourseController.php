@@ -598,6 +598,12 @@ class CourseController extends Controller
      
 
             if(!empty($course_result)){
+                $instructors_user_id = $course_result[0]->created_by;
+
+                $instructor_details = DB::select('select u.name, i.rating, i.professional_title, i.profile_picture_url, 
+                                    about_you, linkedin_profile_url from users u right join instructors i on u.id = i.user_id 
+                                    where u.id = :id', ['id' => $instructors_user_id]); 
+
                 $course_contents_result = DB::select('select * from course_content where is_deleted = 0 
                                             and course_id = :course_id', ['course_id' => $course_id]);
 
@@ -640,7 +646,12 @@ class CourseController extends Controller
                 if($has_student_reviewed_course_result[0]->count > 0){
                     $is_course_reviewed = 1;
                 }
+
+                $enrolment_result = DB::select('select count(*) as count from enrolment_history where course_id = :course_id and user_id = :user_id', 
+                                    ['course_id' => (int)$course_id, 'user_id' => $user_id]);
                 
+                $is_student_enroled = $enrolment_result[0]->count > 0 ? 1: 0;
+
                 return response()->json([
                     'message' => 'Course gotten',
                     'courses' => $course_result[0],
@@ -652,7 +663,9 @@ class CourseController extends Controller
                     'curriculums' => $course_curriculum_result,
                     'who_is_this_course_for' => $who_is_this_course_for_result,
                     'reviews' => $reviews_result,
-                    'is_course_reviewed' => $is_course_reviewed
+                    'is_course_reviewed' => $is_course_reviewed,
+                    'instructor_details' => $instructor_details[0],
+                    'is_student_enroled' => $is_student_enroled
                 ], 200);
             } else{
                 return response()->json([
