@@ -163,6 +163,27 @@ class CourseController extends Controller
                 return response()->json(['error' => $validator->errors()], 401);                        
             }  
 
+
+            //Get Params
+            $course_id = check_if_null_or_empty($request->course_id);
+            $course_name = check_if_null_or_empty($request->course_name);
+            $sub_title = check_if_null_or_empty($request->sub_title);
+            $course_overview = check_if_null_or_empty($request->course_overview);
+            $class_size = check_if_null_or_empty($request->class_size);
+            $course_category = check_if_null_or_empty($request->course_category);
+            $outcomes = check_if_null_or_empty($request->outcomes);
+            $course_requirements = check_if_null_or_empty($request->course_requirements);
+            $about_course = check_if_null_or_empty($request->about_course);
+            $course_availability = check_if_null_or_empty($request->course_availability);
+            $is_discounted = Config::get('constants.false');
+            $discount_price = check_if_null_or_empty($request->discount_price);
+            $created_by = check_if_null_or_empty($user_id);
+            $date_updated = get_current_date_time();
+            $is_featured_course = Config::get('constants.false');
+            $start_date = check_if_null_or_empty($request->start_date);
+            $end_date = check_if_null_or_empty($request->end_date);
+            $level_of_competence = check_if_null_or_empty($request->level_of_competence);
+
             $url = '';
 
             if($request->file('thumbnail_file')) {
@@ -178,32 +199,15 @@ class CourseController extends Controller
                 $path = \Storage::url($file);
                 $url = asset($path);
 
-            }else{
+                $data = array(
+                    'thumbnail_file_url' => $url
+                );
+        
+                DB::table('courses')->where('id', $course_id)->update($data);
+
+            } else{
                 logger('thumbnail_file does not exist. Not uploaded');
             }
-
-            //Get Params
-            $course_id = check_if_null_or_empty($request->course_id);
-            $course_name = check_if_null_or_empty($request->course_name);
-            $sub_title = check_if_null_or_empty($request->sub_title);
-            $course_overview = check_if_null_or_empty($request->course_overview);
-            $class_size = check_if_null_or_empty($request->class_size);
-            $course_category = check_if_null_or_empty($request->course_category);
-            $outcomes = check_if_null_or_empty($request->outcomes);
-            $course_requirements = check_if_null_or_empty($request->course_requirements);
-            $about_course = check_if_null_or_empty($request->about_course);
-            $course_availability = check_if_null_or_empty($request->course_availability);
-            $promo_video_url = check_if_null_or_empty($request->promo_video_url);
-            $price = check_if_null_or_empty($request->price);
-            $is_discounted = Config::get('constants.false');
-            $discount_price = check_if_null_or_empty($request->discount_price);
-            $is_published = check_if_null_or_empty($request->is_published);
-            $created_by = check_if_null_or_empty($user_id);
-            $date_updated = get_current_date_time();
-            $is_featured_course = Config::get('constants.false');
-            $start_date = check_if_null_or_empty($request->start_date);
-            $end_date = check_if_null_or_empty($request->end_date);
-            $level_of_competence = check_if_null_or_empty($request->level_of_competence);
     
             $data = array(
                 'course_name' => $course_name,
@@ -215,12 +219,8 @@ class CourseController extends Controller
                 'course_requirements' => $course_requirements,
                 'about_course' => $about_course,
                 'course_availability' => $course_availability,
-                'thumbnail_file_url' => $url,
-                'promo_video_url' => $promo_video_url,
-                'price' => $price,
                 'is_discounted' => $is_discounted,
                 'discount_price' => $discount_price,
-                'is_published' => $is_published,
                 'updated_at' => $date_updated,
                 'is_featured_course' => $is_featured_course,
                 'start_date' => $start_date,
@@ -233,32 +233,53 @@ class CourseController extends Controller
             save_activity_trail($user_id, 'Course updated', 'Course with id ('.$course_id.') updated',
                             $date_updated);
     
-            return response()->json([
-                'message' => 'Course updated',
-                'course_name' => $course_name,
-                'sub_title' => $sub_title,
-                'course_overview' => $course_overview,
-                'class_size' => $class_size,
-                'course_category' => $course_category,
-                'outcomes' => $outcomes,
-                'course_requirements' => $course_requirements,
-                'about_course' => $about_course,
-                'course_availability' => $course_availability,
-                'thumbnail_file_url' => $url,
-                'promo_video_url' => $promo_video_url,
-                'price' => $price,
-                'is_discounted' => $is_discounted,
-                'discount_price' => $discount_price,
-                'is_published' => $is_published,
-                'updated_at' => $date_updated,
-                'is_featured_course' => $is_featured_course,
-                'start_date' => $start_date,
-                'end_date' => $end_date,
-                'level_of_competence' => $level_of_competence
-            ], 200);
+            if($url != ''){
+                return response()->json([
+                    'message' => 'Course updated',
+                    'course_name' => $course_name,
+                    'sub_title' => $sub_title,
+                    'course_overview' => $course_overview,
+                    'class_size' => $class_size,
+                    'course_category' => $course_category,
+                    'outcomes' => $outcomes,
+                    'course_requirements' => $course_requirements,
+                    'about_course' => $about_course,
+                    'course_availability' => $course_availability,
+                    'thumbnail_file_url' => $url,
+                    'is_discounted' => $is_discounted,
+                    'discount_price' => $discount_price,
+                    'updated_at' => $date_updated,
+                    'is_featured_course' => $is_featured_course,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'level_of_competence' => $level_of_competence
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Course updated',
+                    'course_name' => $course_name,
+                    'sub_title' => $sub_title,
+                    'course_overview' => $course_overview,
+                    'class_size' => $class_size,
+                    'course_category' => $course_category,
+                    'outcomes' => $outcomes,
+                    'course_requirements' => $course_requirements,
+                    'about_course' => $about_course,
+                    'course_availability' => $course_availability,
+                    'is_discounted' => $is_discounted,
+                    'discount_price' => $discount_price,
+                    'updated_at' => $date_updated,
+                    'is_featured_course' => $is_featured_course,
+                    'start_date' => $start_date,
+                    'end_date' => $end_date,
+                    'level_of_competence' => $level_of_competence
+                ], 200);
+            }
           
         } catch(Exception $e){
-            return $e->getMessage();
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
         }
         
     }
@@ -426,6 +447,19 @@ class CourseController extends Controller
             }
                   
             $user_id = $user->id; */
+
+            $header_auth_token = $request->header('AuthToken');
+
+            $auth_check_result = check_authentication($header_auth_token);
+            
+            if($auth_check_result['status'] == true){
+                $user = $auth_check_result['data'];
+                $user_id = $user->id;
+
+                $check_if_loggedin_student_is_enroled_result = DB::select('select count(*) as count from enrolment_history where 
+                    course_id = :course_id and user_id = :user_id', ['course_id' => (int)$course_id, 'user_id' => $user_id]);
+            }
+                
             
             $course_result = DB::select('select c.id, c.course_name, c.sub_title, c.course_overview, c.outcomes, c.course_requirements, c.class_size, c.level_of_competence, 
                                         c.about_course, c.course_availability, c.thumbnail_file_url, c.promo_video_url, c.course_rating, c.price, c.is_discounted, 
@@ -443,7 +477,7 @@ class CourseController extends Controller
 
                 $instructor_details = DB::select('select u.name, i.rating, i.professional_title, i.profile_picture_url, 
                                     about_you, linkedin_profile_url from users u right join instructors i on u.id = i.user_id 
-                                    where u.id = :id', ['id' => $instructors_user_id]); 
+                                    where u.id = :id', ['id' => $instructors_user_id]);
 
                 $no_of_courses_created_by_instructor = DB::select('select count(*) as no_of_courses_created from courses 
                                     where created_by = :id', ['id' => $instructors_user_id]);
@@ -484,6 +518,7 @@ class CourseController extends Controller
                     'last_3_enroled_users_picture' => $get_last_3_enroled_users_picture_result,
                     'curriculums' => $course_curriculum_result,
                     'who_is_this_course_for' => $who_is_this_course_for_result,
+                    'is_logged_in_student_enrolled' => isset($check_if_loggedin_student_is_enroled_result) ? $check_if_loggedin_student_is_enroled_result[0]->count : 0
                 ], 200);
             } else{
                 return response()->json([
@@ -652,6 +687,9 @@ class CourseController extends Controller
                 
                 $is_student_enroled = $enrolment_result[0]->count > 0 ? 1: 0;
 
+                $all_enroled_students = DB::select('select u.id, u.name, u.profile_picture_url from enrolment_history e right join users u on u.id = e.user_id 
+                                        where e.course_id = :course_id', ['course_id' => (int)$course_id]);
+
                 return response()->json([
                     'message' => 'Course gotten',
                     'courses' => $course_result[0],
@@ -665,7 +703,8 @@ class CourseController extends Controller
                     'reviews' => $reviews_result,
                     'is_course_reviewed' => $is_course_reviewed,
                     'instructor_details' => $instructor_details[0],
-                    'is_student_enroled' => $is_student_enroled
+                    'is_student_enroled' => $is_student_enroled,
+                    'all_enroled_students' => $all_enroled_students
                 ], 200);
             } else{
                 return response()->json([

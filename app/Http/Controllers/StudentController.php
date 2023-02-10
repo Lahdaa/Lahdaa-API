@@ -64,13 +64,18 @@ class StudentController extends Controller
                 
             $user_id = $user->id;
 
-            $all_student_live_classes_result = DB::select('select l.*, lp.name as platform_name,
-                                        (select u.name from users u where u.id = l.created_by) as instructor_name 
-                                        from live_class l 
-                                        inner join live_class_platform lp on lp.id = l.preferred_platform where l.course_id in 
-                                        (select course_id from enrolment_history where is_completed = :isCompleted and 
-                                        user_id = :id) and l.is_completed = 0 and l.is_deleted = 0 order by l.date desc', 
-                                        ['id' => $user_id, 'isCompleted' => Config::get('constants.false')]);
+            $all_student_live_classes_result = DB::select('select l.*, lp.name as platform_name, 
+                                            (select u.name from users u where u.id = l.created_by) as instructor_name, 
+                                            lt.name as live_class_type_name, c.topic as curriculum_topic from live_class l 
+                                            inner join live_class_platform lp on lp.id = l.preferred_platform 
+                                            inner join live_class_type lt on lt.live_class_type_id = l.live_class_type 
+                                            inner join curriculum c on c.curriculum_id = l.curriculum_id 
+                                            where l.course_id in 
+                                            (select course_id from enrolment_history where is_completed = 0 and 
+                                            user_id = :id) and l.is_completed = :isCompleted and l.is_deleted = 0 order by l.date desc', 
+                                            ['id' => $user_id, 'isCompleted' => Config::get('constants.false')]);
+
+
 
             $upcoming_classes = array();
 
@@ -85,6 +90,8 @@ class StudentController extends Controller
                             'link_to_live_class' => $all_student_live_classes->link_to_live_class,
                             'platform_name' => $all_student_live_classes->platform_name,
                             'instructor_name' => $all_student_live_classes->instructor_name,
+                            'live_class_type_name' => $all_student_live_classes->live_class_type_name,
+                            'curriculum_topic' => $all_student_live_classes->curriculum_topic,
                         ];
 
                 array_push($upcoming_classes, $data);
@@ -447,11 +454,21 @@ class StudentController extends Controller
             $user_id = $user->id;
             $date_updated = get_current_date_time();
 
-            $this->validate($request, [
+            // $this->validate($request, [
+            //     'billing_country' => 'required',
+            //     'billing_address' => 'required',
+            //     'billing_state' => 'required',
+            // ]);
+
+            $validator = Validator::make($request->all(),[ 
                 'billing_country' => 'required',
                 'billing_address' => 'required',
                 'billing_state' => 'required',
             ]);
+
+            if($validator->fails()) {          
+                return response()->json(['error' => $validator->errors()], 401);                        
+            }  
 
             //Get Params
             $billing_country = check_if_null_or_empty($request->billing_country);
@@ -483,7 +500,9 @@ class StudentController extends Controller
             ], 200);
 
         } catch(Exception $e){
-            return $e->getMessage();
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -749,7 +768,7 @@ class StudentController extends Controller
         }
     }
 
-    public function getRecentCourses(Request $request){
+    public function getRecentCoursesOld(Request $request){
         try {
             $header_auth_token = $request->header('AuthToken');
 
@@ -816,6 +835,64 @@ class StudentController extends Controller
         } catch(Exception $e){
             return response()->json([
                 'message' => 'Error fetching student recent courses'
+            ], 500);
+        }
+    }
+
+    public function getRecentCourses(Request $request){
+        try {
+            $header_auth_token = $request->header('AuthToken');
+
+            $auth_check_result = check_authentication($header_auth_token);
+            
+            if($auth_check_result['status'] == false){
+                return $auth_check_result;
+            } else{
+                $user = $auth_check_result['data'] ;
+            }
+                
+            $user_id = $user->id;
+
+            $data = (object)[];
+
+            $last_interacted_course = DB::select('select course_id from course_content_tracker where user_id = :user_id and is_completed = 0 
+                                        order by updated_at desc', ['user_id' => $user_id]);
+
+
+            if(!empty($last_interacted_course)){
+                $course_id = $last_interacted_course[0]->course_id;
+
+                $course_result = DB::select('select id, course_name, thumbnail_file_url from courses where id = :id', ['id' => $course_id]);
+    
+    
+                $data->course_id = $course_id;
+                $data->course_name = $course_result[0]->course_name;
+                $data->thumbnail_file_url = $course_result[0]->thumbnail_file_url;
+    
+                $total_course_content_count_result = DB::select('select count(*) as count from course_content where is_deleted = 0 and course_id = :course_id', 
+                                            ['course_id' => $course_id]);
+    
+                $data->total_course_content = $total_course_content_count_result[0]->count;
+    
+    
+                $completed_course_contents = DB::select('select count(*) as count from course_content_tracker where course_id = :course_id and user_id = :user_id and is_completed = 1',
+                                            ['course_id' => $course_id, 'user_id' => $user_id]);
+    
+    
+                $data->completed_course_content = $completed_course_contents[0]->count;
+    
+                $data->completed_percentage = $completed_course_contents[0]->count == 0 ? 0 :
+                                            floor(($completed_course_contents[0]->count / $total_course_content_count_result[0]->count) * 100);
+            }
+
+            return response()->json([
+                'message' => 'Recent course gotten successfully',
+                'recent_course' => $data
+            ], 200);
+
+        } catch(Exception $e){
+            return response()->json([
+                'message' => 'Error fetching student recent course'
             ], 500);
         }
     }

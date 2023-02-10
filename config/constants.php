@@ -30,6 +30,8 @@ return [
 
     'stripe_base_url' => 'https://api.stripe.com',
 
-    'no_of_items_for_pagination' => 20
+    'no_of_items_for_pagination' => 20,
+
+    'default_price_currency' => 'GBP'
 
 ];

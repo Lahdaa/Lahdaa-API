@@ -57,7 +57,7 @@ class PaypalController extends Controller
 
                 $omni_response = $this->gateway->purchase(array(
                     'amount' => $amount_to_be_paid,
-                    'currency' => 'GBP',
+                    'currency' => Config::get('constants.default_price_currency'),
                     'returnUrl' => Config::get('constants.prod_url') . 'user-course/confirm-payment?channel=paypal',
                     'cancelUrl' => Config::get('constants.prod_url') . 'course/' . $course_id
                 ))->send();
@@ -78,7 +78,7 @@ class PaypalController extends Controller
                     'channel' => 'paypal',
                     'status' => Config::get('constants.pending'),
                     'created_at' => get_current_date_time(),
-                    'currency' => 'GBP'
+                    'currency' => Config::get('constants.default_price_currency')
                 );
         
                 $transaction_id = DB::table('transaction')->insertGetId($data);

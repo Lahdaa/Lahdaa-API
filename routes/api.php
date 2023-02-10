@@ -128,6 +128,7 @@ Route::get('instructor/get-instructor-info/{user_id}', [InstructorController::cl
 Route::post('/instructor/instructor-search', [InstructorController::class, 'searchForInstructor']);
 Route::post('/instructor/filter-instructor-search', [InstructorController::class, 'filterInstructor']);
 Route::get('/instructor/instructor-search-new', [InstructorController::class, 'searchForInstructorNew']);
+Route::post('/instructor/approve-instructor', [InstructorController::class, 'approveInstructor']);
 
 
 

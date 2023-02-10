@@ -230,7 +230,7 @@ class StripeController extends Controller
 
                 $price = $stripe->prices->create([
                     'unit_amount' => floatval($amount_to_be_paid) * 100,
-                    'currency' => 'gbp',
+                    'currency' => Config::get('constants.default_price_currency'),
                     'product' => $product->id,
                   ]);
 
@@ -265,7 +265,7 @@ class StripeController extends Controller
                         'channel' => 'stripe',
                         'status' => Config::get('constants.pending'),
                         'created_at' => get_current_date_time(),
-                        'currency' => 'GBP'
+                        'currency' => Config::get('constants.default_price_currency')
                     );
             
                     $transaction_id = DB::table('transaction')->insertGetId($data);

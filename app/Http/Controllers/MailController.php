@@ -50,7 +50,7 @@ class MailController extends Controller{
    public static function send_student_welcome_mail($user_fullName, $user_email, $activation_url) {
       try{
          $data = array(
-            'user_fullName' => $user_fullName,
+            'user_fullName' => $user_fullName, 
             'user_email' => $user_email,
             'activation_url' => $activation_url
          );

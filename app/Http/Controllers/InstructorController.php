@@ -835,7 +835,6 @@ class InstructorController extends Controller
         }
     }
 
-
     public function searchForInstructor(Request $request){
         try{
             $validator = Validator::make($request->all(),[ 
@@ -986,6 +985,35 @@ class InstructorController extends Controller
                     'message' => 'No instructor found',
                 ], 200);
             }
+
+        } catch(Exception $e){
+            return $e->getMessage();
+        }
+    }
+
+    public function approveInstructor(Request $request){
+        try{
+            $this->validate($request, [
+                'instructor_id' => 'required|numeric'
+            ]);
+
+            //Get Params
+            $instructor_id = check_if_null_or_empty($request->instructor_id);
+            $date_updated = get_current_date_time();
+
+            $data_for_instructor_table = array(
+                'is_approved' => Config::get('constants.true')
+            );
+
+            Instructor::where('user_id', $instructor_id)->update($data_for_instructor_table);
+
+            save_activity_trail($instructor_id, 'Instructor Approved', 'Instructor with id ('. $instructor_id .') has been approved',
+                                $date_updated);
+
+            return response()->json([
+                'message' => 'Instructor approved',
+                'user_id' => $instructor_id,
+            ], 200);
 
         } catch(Exception $e){
             return $e->getMessage();

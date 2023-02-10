@@ -141,19 +141,21 @@ if(!function_exists('decrypt')){
     }
 }
 
-
-function encrycpt($plaintext, $password) {
-    
-}
-
-function ndecrypt($ivHashCiphertext, $password) {
-    $method = "AES-256-CBC";
-    $iv = substr($ivHashCiphertext, 0, 16);
-    $hash = substr($ivHashCiphertext, 16, 32);
-    $ciphertext = substr($ivHashCiphertext, 48);
-    $key = hash('sha256', $password, true);
-
-    if (!hash_equals(hash_hmac('sha256', $ciphertext . $iv, $key, true), $hash)) return null;
-
-    return openssl_decrypt($ciphertext, $method, $key, OPENSSL_RAW_DATA, $iv);
+if(!function_exists('get_converted_price')){
+    function get_converted_price($from, $to, $amount){
+        $req_url = 'https://api.exchangerate.host/convert?from=' . $from . '&to=' . $to . '&amount=' . $amount;
+        $response_json = file_get_contents($req_url);
+        if(false !== $response_json) {
+            try {
+                $response = json_decode($response_json);
+                if($response->success === true) {
+                    return round($response->result, 2);
+                } else {
+                    return 0;
+                }
+            } catch(Exception $e) {
+                return $e->getMessage();
+            }
+        }
+    }
 }

@@ -51,8 +51,8 @@ class PassportAuthController extends Controller
 
             
             //Send welcome mail
-            $student_name = trim($request->name);
-            $student_email = trim($request->email);
+            $student_name = trim($user->name);
+            $student_email = trim($user->email);
 
             MailController::send_student_welcome_mail($student_name, $student_email, $activation_url);
 
@@ -99,7 +99,9 @@ class PassportAuthController extends Controller
     
             DB::insert('insert into user_role (role_id, user_id) values (?, ?)', [Config::get('constants.instructor_role'), $user->id]);
     
-            $profile_url = generate_random_string(7);
+            //$profile_url = generate_random_string(7);
+            $profile_url = strtolower(preg_replace("/[^\w]+/", "-", trim($request->name))) . '-' . generate_random_string(7);
+	
     
             Instructor::create([
                 'user_id' => $user->id,
