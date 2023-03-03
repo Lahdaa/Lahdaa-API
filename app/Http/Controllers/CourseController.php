@@ -518,7 +518,8 @@ class CourseController extends Controller
                     'last_3_enroled_users_picture' => $get_last_3_enroled_users_picture_result,
                     'curriculums' => $course_curriculum_result,
                     'who_is_this_course_for' => $who_is_this_course_for_result,
-                    'is_logged_in_student_enrolled' => isset($check_if_loggedin_student_is_enroled_result) ? $check_if_loggedin_student_is_enroled_result[0]->count : 0
+                    //'is_logged_in_student_enrolled' => isset($check_if_loggedin_student_is_enroled_result) ? $check_if_loggedin_student_is_enroled_result[0]->count : 0,
+                    'is_logged_in_student_enrolled' => isset($check_if_loggedin_student_is_enroled_result) ? 1 : 0
                 ], 200);
             } else{
                 return response()->json([

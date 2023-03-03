@@ -90,13 +90,13 @@ class InstructorController extends Controller
             $user_id = $user->id;
 
             $enrolment_count_result = DB::select('select count(*) as enrolment_count from enrolment_history where course_id in 
-                                        (select course_id from courses where created_by = :id)', ['id' => $user_id]); 
+                                        (select id from courses where created_by = :id)', ['id' => $user_id]); 
 
             $courses_count_result = DB::select('select count(*) as courses_count from courses where is_deleted = 0 and
                                         created_by = :id', ['id' => $user_id]); 
 
             $total_instructor_reveue_result = DB::select('select sum(instructor_revenue) as amount from transaction where 
-                                        course_id in (select course_id from courses where created_by = :id)', ['id' => $user_id]);
+                                        course_id in (select id from courses where created_by = :id)', ['id' => $user_id]);
 
             $instructor_info_result = DB::select('select profile_picture_url, rating, profile_url from instructors where user_id = :id', ['id' => $user_id]);                                        
             
@@ -697,7 +697,6 @@ class InstructorController extends Controller
                 'email' => 'required|email',
                 'phone_number' => 'required',
                 'about_me' => 'required',
-                'professional_portfolio' => 'required',
                 'linkedin_profile_url' => 'required',
                 'country_id' => 'required|numeric',
                 'course_category_id' => 'required|numeric',
@@ -757,7 +756,8 @@ class InstructorController extends Controller
 
                 DB::insert('insert into user_role (role_id, user_id) values (?, ?)', [Config::get('constants.instructor_role'), $user->id]);
 
-                $profile_url = generate_random_string(7);
+                //$profile_url = generate_random_string(7);
+                $profile_url = strtolower(preg_replace("/[^\w]+/", "-", trim($request->name))) . '-' . generate_random_string(7);
     
                 Instructor::create([
                     'user_id' => $user->id,

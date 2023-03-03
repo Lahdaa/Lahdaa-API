@@ -590,11 +590,13 @@ class StudentController extends Controller
                   
             $user_id = $user->id;
 
-            $user_info_result = DB::select('select billing_country, billing_address, billing_postal_code, billing_state, 
-                                billing_city, billing_organization, billing_tax_id from users where id = :id', ['id' => $user_id]); 
+            $user_info_result = DB::select('select u.billing_country, c.country_name as billing_country_name, u.billing_address, u.billing_postal_code, 
+                                            u.billing_state, u.billing_city, u.billing_organization, u.billing_tax_id from users u 
+                                            right join country c on c.country_id = u.billing_country where u.id = :id', ['id' => $user_id]); 
 
             $student_bililng_info = array(
                 'billing_country' => $user_info_result[0]->billing_country,
+                'billing_country_name' => $user_info_result[0]->billing_country_name,
                 'billing_address' => $user_info_result[0]->billing_address,
                 'billing_postal_code' => $user_info_result[0]->billing_postal_code,
                 'billing_state' => $user_info_result[0]->billing_state,
